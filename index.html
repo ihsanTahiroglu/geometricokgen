@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Geometri Kaşifleri - Çokgen Laboratuvarı</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      touch-action: manipulation;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .point-handle {
+      cursor: grab;
+      user-select: none;
+    }
+    .point-handle:active {
+      cursor: grabbing;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.85; }
+      50% { transform: scale(1.3); opacity: 0.25; }
+      100% { transform: scale(0.95); opacity: 0.85; }
+    }
+    .pulse-target {
+      animation: pulse-ring 1.8s infinite ease-in-out;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col select-none overflow-x-hidden">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-indigo-200">
+          📐
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Geometri Kaşifleri</h1>
+          <p class="text-xs font-semibold text-indigo-600">5. Sınıf Çokgen Laboratuvarı</p>
+        </div>
+      </div>
+
+      <!-- Hazır Düzgün Çokgen Örnekleri -->
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 hidden md:inline">Örnekler:</span>
+        <button onclick="loadPreset('triangle')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Üçgen</button>
+        <button onclick="loadPreset('quad')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Dörtgen</button>
+        <button onclick="loadPreset('pentagon')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Beşgen</button>
+        <button onclick="loadPreset('hexagon')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Altıgen</button>
+        <button onclick="loadPreset('octagon')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Sekizgen</button>
+        <button onclick="loadPreset('decagon')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Ongen</button>
+      </div>
+
+      <!-- Sağ Kontroller: Ses ve Görevler -->
+      <div class="flex items-center space-x-2">
+        <button id="toggleAudioBtn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg text-sm border border-slate-200 transition" title="Sesi Aç/Kapat">
+          🔊
+        </button>
+        <button onclick="openQuestModal()" class="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 rounded-lg text-xs font-bold transition">
+          <span>🎯</span>
+          <span>Görevler</span>
+          <span id="questBadge" class="ml-1 bg-amber-500 text-white rounded-full px-1.5 py-0.2 text-[10px]">0/7</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto w-full flex-1 p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
+    
+    <!-- SOL BÖLGE: ÇOKGEN ÇALIŞMA ALANI -->
+    <section class="lg:col-span-8 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <!-- Üst Yardımcı Araç Çubuğu -->
+      <div class="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/80">
+        <div class="flex items-center space-x-2">
+          <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+          <span id="shapeSummaryText" class="text-xs sm:text-sm font-bold text-slate-700">Temiz Çalışma Alanı</span>
+          <span id="shapeValidityText" class="text-xs text-slate-500 hidden sm:inline font-medium">(Nokta eklemek için kareli alana dokun)</span>
+        </div>
+
+        <div class="flex items-center space-x-1.5">
+          <!-- Çokgeni Kapat Butonu -->
+          <button id="closePolyBtn" class="hidden items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+            <span>✅</span>
+            <span>Çokgeni Kapat</span>
+          </button>
+          
+          <button id="undoBtn" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 disabled:opacity-40 transition" title="Son köşeyi geri al">
+            ↩ Geri Al
+          </button>
+          <button id="clearBtn" class="px-2.5 py-1.5 bg-white hover:bg-rose-50 hover:text-rose-600 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition" title="Tümünü temizle">
+            🗑️ Temizle
+          </button>
+        </div>
+      </div>
+
+      <!-- İnteraktif SVG Tuval -->
+      <div class="relative flex-1 min-h-[380px] sm:min-h-[460px] bg-slate-50 overflow-hidden flex items-center justify-center" id="canvasContainer">
+        <svg id="geomSvg" class="w-full h-full cursor-crosshair block" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <pattern id="smallGrid" width="25" height="25" patternUnits="userSpaceOnUse">
+              <path d="M 25 0 L 0 0 0 25" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+            </pattern>
+            <pattern id="mainGrid" width="100" height="100" patternUnits="userSpaceOnUse">
+              <rect width="100" height="100" fill="url(#smallGrid)"/>
+              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#cbd5e1" stroke-width="1.5"/>
+            </pattern>
+          </defs>
+
+          <!-- Izgara Zemin Katmanı -->
+          <rect width="800" height="500" fill="#f8fafc"/>
+          <rect width="800" height="500" fill="url(#mainGrid)"/>
+
+          <!-- Çokgen İç Bölge Dolgusu -->
+          <polygon id="polyInterior" class="hidden" fill="rgba(99, 102, 241, 0.12)" stroke="none"></polygon>
+
+          <!-- Köşegenler Katmanı -->
+          <g id="diagonalsLayer"></g>
+          <line id="diagonalDraftLine" x1="0" y1="0" x2="0" y2="0" stroke="#9333ea" stroke-width="3" stroke-dasharray="6 4" stroke-linecap="round" class="hidden pointer-events-none" />
+
+          <!-- Kenarlar Katmanı -->
+          <g id="edgesLayer"></g>
+
+          <!-- Kenar İsim Etiketleri: [AB] -->
+          <g id="edgeLabelsLayer"></g>
+
+          <!-- İç Açı Yayları ve Değerleri (Mavi) -->
+          <g id="interiorLayer"></g>
+
+          <!-- Dış Açı Yayları ve Doğrusal Kenar Uzantıları (Kırmızı) -->
+          <g id="exteriorLayer"></g>
+
+          <!-- Kapatma Rehber Halkası (A Noktası) -->
+          <g id="closeHintLayer"></g>
+
+          <!-- Köşe Noktaları: A, B, C... -->
+          <g id="verticesLayer"></g>
+        </svg>
+
+        <!-- Anlık Yardım / İpucu Rozeti -->
+        <div id="statusToast" class="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-md bg-white/95 backdrop-blur-xs border border-slate-200 text-slate-700 text-xs px-3.5 py-2.5 rounded-xl shadow-lg flex items-center justify-between space-x-2 transition-all duration-200 pointer-events-none opacity-0">
+          <div class="flex items-center space-x-2">
+            <span id="toastIcon" class="text-base">💡</span>
+            <span id="toastMsg" class="font-medium leading-snug">Izgaraya tıklayarak ilk köşeni (A) oluştur.</span>
+          </div>
+          <button id="closeToastBtn" class="text-slate-400 hover:text-slate-600 pointer-events-auto p-1 text-sm font-bold">✕</button>
+        </div>
+      </div>
+
+      <!-- Alt Bilgi / Köşe Sayacı -->
+      <div class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+        <div class="flex items-center space-x-2">
+          <span>Köşe Limiti:</span>
+          <span id="vertexCounterText" class="font-bold text-slate-800 font-mono-num">0 / 10</span>
+        </div>
+        <div class="text-[11px] text-slate-400">
+          💡 Köşeleri tutarak sürükleyebilirsin.
+        </div>
+      </div>
+    </section>
+
+    <aside class="lg:col-span-4 flex flex-col space-y-4">
+      
+      <!-- Ana Mod Kartı -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-extrabold text-slate-900 tracking-wide uppercase">Elemanları İnceleyelim</h2>
+          <span class="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">5. Sınıf MEB</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+          Bir elemana tıkla; çokgen üzerindeki yerini, matematiksel sembolünü ve ölçüsünü gör.
+        </p>
+
+        <!-- Eleman İnceleme Butonları -->
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          <!-- 1. KÖŞE -->
+          <button id="btnModeVertex" class="mode-btn p-3 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-blue-900 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <span class="text-xl">🔵</span>
+            <span class="text-xs font-bold">KÖŞE</span>
+            <span class="text-[10px] text-blue-600 font-mono-num">A, B, C...</span>
+          </button>
+
+          <!-- 2. KENAR -->
+          <button id="btnModeEdge" class="mode-btn p-3 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-emerald-900 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <span class="text-xl">🟢</span>
+            <span class="text-xs font-bold">KENAR</span>
+            <span class="text-[10px] text-emerald-600 font-mono-num">[AB], [BC]...</span>
+          </button>
+
+          <!-- 3. KÖŞEGEN (Mor) -->
+          <button id="btnModeDiagonal" class="mode-btn p-3 rounded-xl border border-purple-200 bg-purple-50/60 hover:bg-purple-100 text-purple-900 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <span class="text-xl">🟣</span>
+            <span class="text-xs font-bold">KÖŞEGEN</span>
+            <span class="text-[10px] text-purple-600 font-mono-num">[AC], [BD]...</span>
+          </button>
+
+          <!-- 4. İÇ AÇI (Mavi) -->
+          <button id="btnModeInterior" class="mode-btn p-3 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-blue-900 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <span class="text-xl">🔵</span>
+            <span class="text-xs font-bold">İÇ AÇI</span>
+            <span class="text-[10px] text-blue-600 font-mono-num">s(B̂) [Mavi]</span>
+          </button>
+
+          <!-- 5. DIŞ AÇI (Kırmızı) -->
+          <button id="btnModeExterior" class="mode-btn p-3 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100 text-rose-900 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <span class="text-xl">🔴</span>
+            <span class="text-xs font-bold">DIŞ AÇI</span>
+          </button>
+
+          <!-- 6. HEPSİNİ GÖSTER -->
+          <button id="btnModeAll" class="mode-btn p-3 rounded-xl border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100 text-indigo-900 flex flex-col items-center justify-center gap-1 transition active:scale-95">
+            <span class="text-xl">🌟</span>
+            <span class="text-xs font-bold">HEPSİ</span>
+            <span class="text-[10px] text-indigo-600">(Tam Görünüm)</span>
+          </button>
+        </div>
+
+        <!-- Seçili Elemanın Detay Kartı -->
+        <div id="inspectorDetailCard" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex items-center space-x-2 mb-1.5">
+            <span id="detailIcon" class="text-base">📌</span>
+            <h3 id="detailTitle" class="text-xs font-bold text-slate-800">Çokgenini Oluştur</h3>
+          </div>
+          <p id="detailDesc" class="text-xs text-slate-600 leading-relaxed">
+            Kareli alana dokunarak köşeleri ekle. En az 3 köşe ekleyip şekli kapattığında elemanları burada listeleyebilirsin.
+          </p>
+
+          <!-- Dinamik Ölçüm ve Sembol Listesi -->
+          <div id="elementsBadgeList" class="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-slate-200">
+            <span class="text-[11px] text-slate-400 italic">Henüz eleman seçilmedi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keşif Kartı -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div class="flex items-center space-x-2 mb-2">
+          <span class="text-base">🤔</span>
+          <h4 class="text-xs font-bold text-slate-800">Kaşif Kuralı</h4>
+        </div>
+        <div class="bg-indigo-50/80 rounded-lg p-2.5 border border-indigo-100 text-xs font-semibold text-indigo-900 flex items-center justify-between">
+          <span id="discoveryRuleText">Köşe = Kenar = İç Açı Sayısı</span>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <div id="questModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+        <div class="flex items-center space-x-2">
+          <span class="text-2xl">🎯</span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Geometri Keşif Görevleri</h3>
+            <p class="text-xs text-amber-800">Görevleri tamamla, çokgen kaşifi unvanını kazan!</p>
+          </div>
+        </div>
+        <button onclick="closeQuestModal()" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-sm">✕</button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-2.5 flex-1" id="questListContainer"></div>
+
+      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-xs text-slate-500">Tamamlanan: <strong id="questModalCounter" class="text-slate-800 font-bold">0 / 7</strong></span>
+        <button onclick="closeQuestModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition">Devam Et</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const MIN_VERTICES = 3;
+    const MAX_VERTICES = 10;
+    const VERTEX_NAMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+    let points = [];               // { x, y, name }
+    let isClosed = false;          // Çokgen kapalı mı?
+    let activeMode = 'NONE';       // 'NONE', 'VERTEX', 'EDGE', 'DIAGONAL', 'INTERIOR', 'EXTERIOR', 'ALL'
+    let selectedVertexIndex = null;
+    let diagonalFirstIndex = null; // Serbest köşegen çizimi için ilk seçilen köşe
+    let userDiagonals = [];        // Öğrencinin çizdiği köşegenler: [{i, j}]
+    let diagonalToolMode = 'DRAW'; // 'DRAW' (Serbest Çizim) veya 'MOVE' (Köşe Taşıma)
+    let isDrawingDiagonal = false;
+    let diagonalStartIdx = null;
+    let isDragging = false;
+    let draggedIndex = null;
+    let dragStartPos = null;
+    let dragMoved = false;
+    let startScreenX = 0;
+    let startScreenY = 0;
+    let hasDragged = false;
+    let audioEnabled = true;
+
+    // Görev Listesi
+    const quests = [
+      { id: 1, title: "3 Köşeli Çokgen", desc: "Çalışma alanında kapalı bir Üçgen oluştur.", done: false, check: (pts, closed) => closed && pts.length === 3 },
+      { id: 2, title: "Dörtgen Oluştur", desc: "4 köşeli kapalı bir çokgen çiz.", done: false, check: (pts, closed) => closed && pts.length === 4 },
+      { id: 3, title: "Beşgen veya Daha Fazlası", desc: "En az 5 köşeli bir çokgen inşa et.", done: false, check: (pts, closed) => closed && pts.length >= 5 },
+      { id: 4, title: "Köşeleri İncele", desc: "KÖŞE butonuna basarak tüm köşe noktalarını vurgula.", done: false, check: () => activeMode === 'VERTEX' },
+      { id: 5, title: "Kenarları Keşfet", desc: "KENAR butonuna basarak [AB] gibi doğru parçalarını incele.", done: false, check: () => activeMode === 'EDGE' },
+      { id: 6, title: "Köşegen Çiz", desc: "KÖŞEGEN modunda ardışık olmayan iki köşeyi birleştir.", done: false, check: () => userDiagonals.length > 0 },
+      { id: 7, title: "İç Açıları Ölç", desc: "İÇ AÇI butonuna basarak iç açı yaylarını ve derecelerini gör.", done: false, check: (pts, closed) => closed && activeMode === 'INTERIOR' }
+    ];
+
+    // DOM Elementleri
+    const geomSvg = document.getElementById('geomSvg');
+    const polyInterior = document.getElementById('polyInterior');
+    const diagonalsLayer = document.getElementById('diagonalsLayer');
+    const diagonalDraftLine = document.getElementById('diagonalDraftLine');
+    const edgesLayer = document.getElementById('edgesLayer');
+    const edgeLabelsLayer = document.getElementById('edgeLabelsLayer');
+    const interiorLayer = document.getElementById('interiorLayer');
+    const exteriorLayer = document.getElementById('exteriorLayer');
+    const closeHintLayer = document.getElementById('closeHintLayer');
+    const verticesLayer = document.getElementById('verticesLayer');
+
+    const shapeSummaryText = document.getElementById('shapeSummaryText');
+    const shapeValidityText = document.getElementById('shapeValidityText');
+    const statusDot = document.getElementById('statusDot');
+    const vertexCounterText = document.getElementById('vertexCounterText');
+    const closePolyBtn = document.getElementById('closePolyBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+
+    const statusToast = document.getElementById('statusToast');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastIcon = document.getElementById('toastIcon');
+    const closeToastBtn = document.getElementById('closeToastBtn');
+
+    const detailIcon = document.getElementById('detailIcon');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailDesc = document.getElementById('detailDesc');
+    const elementsBadgeList = document.getElementById('elementsBadgeList');
+    const questBadge = document.getElementById('questBadge');
+
+    let audioCtx = null;
+    function playSound(type) {
+      if (!audioEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(750, now + 0.05);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'close') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(392, now);
+          osc.frequency.setValueAtTime(523.25, now + 0.08);
+          osc.frequency.setValueAtTime(659.25, now + 0.16);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'warn') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(160, now + 0.08);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        }
+      } catch (err) {}
+    }
+
+    if (toggleAudioBtn) {
+      toggleAudioBtn.addEventListener('click', () => {
+        audioEnabled = !audioEnabled;
+        toggleAudioBtn.textContent = audioEnabled ? '🔊' : '🔇';
+        showToast(audioEnabled ? "Ses efektleri açıldı." : "Ses kapatıldı.", "🔊");
+      });
+    }
+
+    function showToast(msg, icon = '💡') {
+      if (!toastMsg || !statusToast) return;
+      toastMsg.textContent = msg;
+      if (toastIcon) toastIcon.textContent = icon;
+      statusToast.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    if (closeToastBtn) {
+      closeToastBtn.addEventListener('click', () => {
+        statusToast.classList.add('opacity-0', 'pointer-events-none');
+      });
+    }
+
+    // Native SVG CTM kullanarak tıklanan noktanın SVG içindeki birebir tam koordinatını bulur
+    function getSvgCoordinates(evt) {
+      const pt = geomSvg.createSVGPoint();
+      if (evt.touches && evt.touches.length > 0) {
+        pt.x = evt.touches[0].clientX;
+        pt.y = evt.touches[0].clientY;
+      } else if (evt.changedTouches && evt.changedTouches.length > 0) {
+        pt.x = evt.changedTouches[0].clientX;
+        pt.y = evt.changedTouches[0].clientY;
+      } else {
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+      }
+      const ctm = geomSvg.getScreenCTM();
+      if (!ctm) return { x: pt.x, y: pt.y };
+      const svgPoint = pt.matrixTransform(ctm.inverse());
+      return { x: svgPoint.x, y: svgPoint.y };
+    }
+
+    // Doğru parçası kesişim kontrolü
+    function segmentsIntersect(p1, p2, p3, p4) {
+      function ccw(A, B, C) {
+        return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+      }
+      return (ccw(p1, p3, p4) !== ccw(p2, p3, p4)) && (ccw(p1, p2, p3) !== ccw(p1, p2, p4));
+    }
+
+    function computeAllInteriorAngles(poly) {
+      const n = poly.length;
+      if (n < 3) return [];
+
+      let totalTurn = 0;
+      const turnAngles = [];
+
+      for (let i = 0; i < n; i++) {
+        const prev = poly[(i - 1 + n) % n];
+        const curr = poly[i];
+        const next = poly[(i + 1) % n];
+
+        const v1x = curr.x - prev.x;
+        const v1y = curr.y - prev.y;
+        const v2x = next.x - curr.x;
+        const v2y = next.y - curr.y;
+
+        const cross = v1x * v2y - v1y * v2x;
+        const dot = v1x * v2x + v1y * v2y;
+        const turn = Math.atan2(cross, dot);
+        turnAngles.push(turn);
+        totalTurn += turn;
+      }
+
+      const isCW = totalTurn > 0;
+
+      const rawAngles = [];
+      for (let i = 0; i < n; i++) {
+        let theta = isCW ? (Math.PI - turnAngles[i]) : (Math.PI + turnAngles[i]);
+        while (theta <= 0) theta += 2 * Math.PI;
+        while (theta > 2 * Math.PI) theta -= 2 * Math.PI;
+        rawAngles.push(theta);
+      }
+
+      const rawDegrees = rawAngles.map(rad => (rad * 180) / Math.PI);
+      const targetSum = (n - 2) * 180;
+
+      const floored = rawDegrees.map(d => Math.floor(d));
+      const currentSum = floored.reduce((a, b) => a + b, 0);
+      const remainderToDistribute = Math.round(targetSum - currentSum);
+
+      const remainders = rawDegrees.map((d, idx) => ({
+        idx,
+        rem: d - Math.floor(d)
+      })).sort((a, b) => b.rem - a.rem);
+
+      const finalDegrees = [...floored];
+      for (let k = 0; k < remainderToDistribute && k < n; k++) {
+        finalDegrees[remainders[k].idx] += 1;
+      }
+
+      return poly.map((curr, i) => {
+        const prev = poly[(i - 1 + n) % n];
+        const next = poly[(i + 1) % n];
+        const theta_interior = rawAngles[i];
+        const interiorDeg = finalDegrees[i];
+
+        const aPrev = Math.atan2(prev.y - curr.y, prev.x - curr.x);
+        const aNext = Math.atan2(next.y - curr.y, next.x - curr.x);
+
+        let diffCW = (aNext - aPrev) % (2 * Math.PI);
+        if (diffCW < 0) diffCW += 2 * Math.PI;
+
+        let sweepFlag, largeArcFlag, midA;
+        if (Math.abs(diffCW - theta_interior) < 0.05) {
+          sweepFlag = 1;
+          largeArcFlag = (theta_interior > Math.PI) ? 1 : 0;
+          midA = aPrev + theta_interior / 2;
+        } else {
+          sweepFlag = 0;
+          largeArcFlag = (theta_interior > Math.PI) ? 1 : 0;
+          midA = aPrev - theta_interior / 2;
+        }
+
+        return {
+          curr,
+          prev,
+          next,
+          aPrev,
+          aNext,
+          interiorSweep: theta_interior,
+          sweepFlag,
+          largeArcFlag,
+          midA,
+          interiorDeg
+        };
+      });
+    }
+
+    function tryClosePolygon() {
+      const n = points.length;
+      if (n < MIN_VERTICES) {
+        playSound('warn');
+        showToast("Çokgen oluşturmak için en az 3 köşe gerekir.", "⚠️");
+        return;
+      }
+      if (isClosed) return;
+
+      const pLast = points[n - 1];
+      const pFirst = points[0];
+
+      let hasOverlap = false;
+      for (let i = 1; i < n - 2; i++) {
+        if (segmentsIntersect(pLast, pFirst, points[i], points[i + 1])) {
+          hasOverlap = true;
+          break;
+        }
+      }
+
+      if (hasOverlap) {
+        playSound('warn');
+        showToast("⚠️ Bu kapatma çizgisi çokgenin diğer kenarlarıyla kesişiyor!", "⚠️");
+        return;
+      }
+
+      isClosed = true;
+      playSound('close');
+      showToast(`Tebrikler! ${n} köşeli kapalı çokgeni oluşturdun.`, "🎉");
+      renderGeometry();
+    }
+
+    if (closePolyBtn) {
+      closePolyBtn.addEventListener('click', tryClosePolygon);
+    }
+
+    function areAdjacent(i, j, n) {
+      if (i === j) return false;
+      const diff = Math.abs(i - j);
+      return diff === 1 || diff === n - 1;
+    }
+
+    function toggleDiagonal(i, j) {
+      const min = Math.min(i, j);
+      const max = Math.max(i, j);
+      const existingIdx = userDiagonals.findIndex(d => d.i === min && d.j === max);
+      if (existingIdx >= 0) {
+        userDiagonals.splice(existingIdx, 1);
+        playSound('click');
+        showToast(`[${points[min].name}${points[max].name}] köşegeni kaldırıldı.`, "🟣");
+      } else {
+        userDiagonals.push({ i: min, j: max });
+        playSound('close');
+        showToast(`Tebrikler! [${points[min].name}${points[max].name}] köşegenini çizdin.`, "🎉");
+      }
+      renderGeometry();
+    }
+
+    function handleDiagonalConnection(i1, i2) {
+      const n = points.length;
+      if (n < 4) {
+        playSound('warn');
+        showToast("⚠️ Üçgenin KÖŞEGENİ YOKTUR! Çünkü tüm köşeler komşudur.", "⚠️");
+        return;
+      }
+      if (i1 === i2) return;
+      if (areAdjacent(i1, i2, n)) {
+        playSound('warn');
+        showToast(`⚠️ ${points[i1].name} noktasından ${points[i2].name}'ye çizilirse ➔ Kenar olur! Köşegen için komşu olmayan bir köşe seçmelisin.`, "⚠️");
+      } else {
+        toggleDiagonal(i1, i2);
+        showToast(`✨ ${points[i1].name} noktasından ${points[i2].name}'ye çizilirse ➔ KÖŞEGEN [${points[Math.min(i1, i2)].name}${points[Math.max(i1, i2)].name}] oluşur!`, "🟣");
+      }
+    }
+
+    function drawAllDiagonals() {
+      const n = points.length;
+      if (!isClosed || n < 4) return;
+      userDiagonals = [];
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          if (!areAdjacent(i, j, n)) {
+            userDiagonals.push({ i, j });
+          }
+        }
+      }
+      playSound('close');
+      showToast(`Tüm köşegenler çizildi (${userDiagonals.length} adet).`, "✨");
+      renderGeometry();
+    }
+
+    function clearDiagonals() {
+      userDiagonals = [];
+      diagonalFirstIndex = null;
+      playSound('click');
+      showToast("Çizilen köşegenler temizlendi.", "↺");
+      renderGeometry();
+    }
+
+    function renderGeometry() {
+      if (diagonalsLayer) diagonalsLayer.innerHTML = '';
+      edgesLayer.innerHTML = '';
+      edgeLabelsLayer.innerHTML = '';
+      verticesLayer.innerHTML = '';
+      interiorLayer.innerHTML = '';
+      if (exteriorLayer) exteriorLayer.innerHTML = '';
+      closeHintLayer.innerHTML = '';
+
+      const n = points.length;
+      vertexCounterText.textContent = `${n} / ${MAX_VERTICES}`;
+      undoBtn.disabled = (n === 0);
+
+      // Kapat Butonunun Görünürlüğü
+      if (closePolyBtn) {
+        if (!isClosed && n >= MIN_VERTICES) {
+          closePolyBtn.classList.remove('hidden');
+          closePolyBtn.classList.add('flex');
+        } else {
+          closePolyBtn.classList.remove('flex');
+          closePolyBtn.classList.add('hidden');
+        }
+      }
+
+      const shapeNames = { 3: 'Üçgen', 4: 'Dörtgen', 5: 'Beşgen', 6: 'Altıgen', 7: 'Yedigen', 8: 'Sekizgen', 9: 'Dokuzgen', 10: 'Ongen' };
+      if (n === 0) {
+        shapeSummaryText.textContent = 'Temiz Çalışma Alanı';
+        shapeValidityText.textContent = '(Nokta eklemek için kareli alana dokun)';
+        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-300';
+      } else if (isClosed) {
+        shapeSummaryText.textContent = `${shapeNames[n] || n + 'gen'} (${n} Köşe, ${n} Kenar)`;
+        shapeValidityText.textContent = 'Kapalı Çokgen';
+        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+      } else {
+        shapeSummaryText.textContent = `Açık Çizgi (${n} Nokta)`;
+        shapeValidityText.textContent = n >= 3 ? 'Kapatmak için "Çokgeni Kapat"a veya A noktasına dokun' : 'En az 3 köşe gereklidir';
+        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+      }
+
+      // İç Dolgu
+      if (isClosed && n >= 3) {
+        polyInterior.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+        polyInterior.classList.remove('hidden');
+      } else {
+        polyInterior.setAttribute('points', '');
+        polyInterior.classList.add('hidden');
+      }
+
+      // 1. KÖŞEGENLER
+      const showDiagonals = (activeMode === 'DIAGONAL' || activeMode === 'ALL');
+      if (diagonalsLayer && isClosed && n >= 4 && showDiagonals) {
+        userDiagonals.forEach(diag => {
+          if (diag.i < n && diag.j < n) {
+            const p1 = points[diag.i];
+            const p2 = points[diag.j];
+
+            const gDiag = document.createElementNS(SVG_NS, 'g');
+
+            const line = document.createElementNS(SVG_NS, 'line');
+            line.setAttribute('x1', p1.x);
+            line.setAttribute('y1', p1.y);
+            line.setAttribute('x2', p2.x);
+            line.setAttribute('y2', p2.y);
+            line.setAttribute('stroke', '#9333ea');
+            line.setAttribute('stroke-width', '2.5');
+            line.setAttribute('stroke-dasharray', '6 4');
+            line.setAttribute('stroke-linecap', 'round');
+            gDiag.appendChild(line);
+
+            // Köşegen Etiketi: [AC]
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+
+            const bg = document.createElementNS(SVG_NS, 'rect');
+            bg.setAttribute('x', midX - 18);
+            bg.setAttribute('y', midY - 9);
+            bg.setAttribute('width', '36');
+            bg.setAttribute('height', '18');
+            bg.setAttribute('rx', '4');
+            bg.setAttribute('fill', '#faf5ff');
+            bg.setAttribute('stroke', '#a855f7');
+            bg.setAttribute('stroke-width', '1.2');
+            gDiag.appendChild(bg);
+
+            const txt = document.createElementNS(SVG_NS, 'text');
+            txt.setAttribute('x', midX);
+            txt.setAttribute('y', midY + 4);
+            txt.setAttribute('text-anchor', 'middle');
+            txt.setAttribute('font-size', '10');
+            txt.setAttribute('font-weight', '800');
+            txt.setAttribute('fill', '#7e22ce');
+            txt.textContent = `[${p1.name}${p2.name}]`;
+            gDiag.appendChild(txt);
+
+            diagonalsLayer.appendChild(gDiag);
+          }
+        });
+      }
+
+      // 2. KENARLAR
+      const edgeCount = isClosed ? n : Math.max(0, n - 1);
+      const isEdgeMode = (activeMode === 'EDGE' || activeMode === 'ALL');
+
+      for (let i = 0; i < edgeCount; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % n];
+
+        const line = document.createElementNS(SVG_NS, 'line');
+        line.setAttribute('x1', p1.x);
+        line.setAttribute('y1', p1.y);
+        line.setAttribute('x2', p2.x);
+        line.setAttribute('y2', p2.y);
+        line.setAttribute('stroke', isEdgeMode ? '#059669' : '#4f46e5');
+        line.setAttribute('stroke-width', isEdgeMode ? '4' : '2.5');
+        line.setAttribute('stroke-linecap', 'round');
+        edgesLayer.appendChild(line);
+
+        // Kenar Etiketi: [AB]
+        if (isEdgeMode) {
+          const midX = (p1.x + p2.x) / 2;
+          const midY = (p1.y + p2.y) / 2;
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = -dy / len;
+          const ny = dx / len;
+          const off = 16;
+
+          const gLabel = document.createElementNS(SVG_NS, 'g');
+          gLabel.setAttribute('class', 'pointer-events-none select-none');
+
+          const bg = document.createElementNS(SVG_NS, 'rect');
+          bg.setAttribute('x', midX + nx * off - 22);
+          bg.setAttribute('y', midY + ny * off - 10);
+          bg.setAttribute('width', '44');
+          bg.setAttribute('height', '20');
+          bg.setAttribute('rx', '5');
+          bg.setAttribute('fill', '#ecfdf5');
+          bg.setAttribute('stroke', '#10b981');
+          bg.setAttribute('stroke-width', '1.2');
+          gLabel.appendChild(bg);
+
+          const txt = document.createElementNS(SVG_NS, 'text');
+          txt.setAttribute('x', midX + nx * off);
+          txt.setAttribute('y', midY + ny * off + 4);
+          txt.setAttribute('text-anchor', 'middle');
+          txt.setAttribute('font-size', '11');
+          txt.setAttribute('font-weight', '700');
+          txt.setAttribute('fill', '#047857');
+          txt.textContent = `[${p1.name}${p2.name}]`;
+          gLabel.appendChild(txt);
+
+          edgeLabelsLayer.appendChild(gLabel);
+        }
+      }
+
+      if (isClosed && n >= 3 && (activeMode === 'INTERIOR' || activeMode === 'ALL')) {
+        const anglesData = computeAllInteriorAngles(points);
+        anglesData.forEach((data) => {
+          const curr = data.curr;
+          const r = 26;
+
+          const startX = curr.x + r * Math.cos(data.aPrev);
+          const startY = curr.y + r * Math.sin(data.aPrev);
+          const endX = curr.x + r * Math.cos(data.aNext);
+          const endY = curr.y + r * Math.sin(data.aNext);
+
+          const arcPath = document.createElementNS(SVG_NS, 'path');
+          arcPath.setAttribute('d', `M ${startX} ${startY} A ${r} ${r} 0 ${data.largeArcFlag} ${data.sweepFlag} ${endX} ${endY}`);
+          arcPath.setAttribute('fill', 'rgba(37, 99, 235, 0.18)');
+          arcPath.setAttribute('stroke', '#2563eb');
+          arcPath.setAttribute('stroke-width', '2.5');
+          arcPath.setAttribute('stroke-linecap', 'round');
+          interiorLayer.appendChild(arcPath);
+
+          const lblDist = 42;
+          const lx = curr.x + lblDist * Math.cos(data.midA);
+          const ly = curr.y + lblDist * Math.sin(data.midA);
+
+          const gLbl = document.createElementNS(SVG_NS, 'g');
+          gLbl.setAttribute('class', 'pointer-events-none select-none');
+
+          const bg = document.createElementNS(SVG_NS, 'rect');
+          bg.setAttribute('x', lx - 18);
+          bg.setAttribute('y', ly - 9);
+          bg.setAttribute('width', '36');
+          bg.setAttribute('height', '18');
+          bg.setAttribute('rx', '4');
+          bg.setAttribute('fill', '#eff6ff');
+          bg.setAttribute('stroke', '#2563eb');
+          bg.setAttribute('stroke-width', '1.2');
+          gLbl.appendChild(bg);
+
+          const t = document.createElementNS(SVG_NS, 'text');
+          t.setAttribute('x', lx);
+          t.setAttribute('y', ly + 4);
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('font-size', '11');
+          t.setAttribute('font-weight', '700');
+          t.setAttribute('fill', '#1d4ed8');
+          t.textContent = `${data.interiorDeg}°`;
+          gLbl.appendChild(t);
+
+          interiorLayer.appendChild(gLbl);
+        });
+      }
+
+      // Dış Açılar (Kenar Uzantısı + Komşu Kenar Arası, Kırmızı Renk)
+      if (isClosed && n >= 3 && (activeMode === 'EXTERIOR' || activeMode === 'ALL') && exteriorLayer) {
+        const anglesData = computeAllInteriorAngles(points);
+        anglesData.forEach((data) => {
+          const curr = data.curr;
+          const prev = data.prev;
+          const next = data.next;
+          const extDeg = 180 - data.interiorDeg;
+
+          const dx = curr.x - prev.x;
+          const dy = curr.y - prev.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const ux = dx / len;
+          const uy = dy / len;
+
+          const extLength = 65;
+          const extX = curr.x + ux * extLength;
+          const extY = curr.y + uy * extLength;
+
+          const extLine = document.createElementNS(SVG_NS, 'line');
+          extLine.setAttribute('x1', curr.x);
+          extLine.setAttribute('y1', curr.y);
+          extLine.setAttribute('x2', extX);
+          extLine.setAttribute('y2', extY);
+          extLine.setAttribute('stroke', '#ef4444');
+          extLine.setAttribute('stroke-width', '2');
+          extLine.setAttribute('stroke-dasharray', '4 3');
+          extLine.setAttribute('stroke-linecap', 'round');
+          exteriorLayer.appendChild(extLine);
+
+          const extDot = document.createElementNS(SVG_NS, 'circle');
+          extDot.setAttribute('cx', extX);
+          extDot.setAttribute('cy', extY);
+          extDot.setAttribute('r', '3');
+          extDot.setAttribute('fill', '#dc2626');
+          exteriorLayer.appendChild(extDot);
+
+          const aExt = Math.atan2(uy, ux);
+          const aNext = Math.atan2(next.y - curr.y, next.x - curr.x);
+
+          let diff = (aNext - aExt) % (2 * Math.PI);
+          if (diff < 0) diff += 2 * Math.PI;
+
+          let sweepFlag, midA;
+          if (diff <= Math.PI) {
+            sweepFlag = 1;
+            midA = aExt + diff / 2;
+          } else {
+            sweepFlag = 0;
+            midA = aExt - (2 * Math.PI - diff) / 2;
+          }
+
+          const rExt = 32;
+          const startX = curr.x + rExt * Math.cos(aExt);
+          const startY = curr.y + rExt * Math.sin(aExt);
+          const endX = curr.x + rExt * Math.cos(aNext);
+          const endY = curr.y + rExt * Math.sin(aNext);
+
+          const arcPath = document.createElementNS(SVG_NS, 'path');
+          arcPath.setAttribute('d', `M ${startX} ${startY} A ${rExt} ${rExt} 0 0 ${sweepFlag} ${endX} ${endY}`);
+          arcPath.setAttribute('fill', 'rgba(239, 68, 68, 0.18)');
+          arcPath.setAttribute('stroke', '#dc2626');
+          arcPath.setAttribute('stroke-width', '2.5');
+          arcPath.setAttribute('stroke-linecap', 'round');
+          exteriorLayer.appendChild(arcPath);
+
+          const lblDist = 48;
+          const lx = curr.x + lblDist * Math.cos(midA);
+          const ly = curr.y + lblDist * Math.sin(midA);
+
+          const gLbl = document.createElementNS(SVG_NS, 'g');
+          gLbl.setAttribute('class', 'pointer-events-none select-none');
+
+          const bg = document.createElementNS(SVG_NS, 'rect');
+          bg.setAttribute('x', lx - 18);
+          bg.setAttribute('y', ly - 9);
+          bg.setAttribute('width', '36');
+          bg.setAttribute('height', '18');
+          bg.setAttribute('rx', '4');
+          bg.setAttribute('fill', '#fef2f2');
+          bg.setAttribute('stroke', '#ef4444');
+          bg.setAttribute('stroke-width', '1.2');
+          gLbl.appendChild(bg);
+
+          const t = document.createElementNS(SVG_NS, 'text');
+          t.setAttribute('x', lx);
+          t.setAttribute('y', ly + 4);
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('font-size', '11');
+          t.setAttribute('font-weight', '700');
+          t.setAttribute('fill', '#b91c1c');
+          t.textContent = `${extDeg}°`;
+          gLbl.appendChild(t);
+
+          exteriorLayer.appendChild(gLbl);
+        });
+      }
+
+      points.forEach((p, idx) => {
+        const g = document.createElementNS(SVG_NS, 'g');
+        g.setAttribute('class', 'point-handle');
+        g.setAttribute('data-index', idx);
+
+        if (idx === 0 && !isClosed && n >= MIN_VERTICES) {
+          const pulseRing = document.createElementNS(SVG_NS, 'circle');
+          pulseRing.setAttribute('cx', p.x);
+          pulseRing.setAttribute('cy', p.y);
+          pulseRing.setAttribute('r', '24');
+          pulseRing.setAttribute('fill', 'rgba(16, 185, 129, 0.25)');
+          pulseRing.setAttribute('stroke', '#10b981');
+          pulseRing.setAttribute('stroke-width', '2');
+          pulseRing.setAttribute('class', 'pulse-target');
+          closeHintLayer.appendChild(pulseRing);
+
+          const hintTxt = document.createElementNS(SVG_NS, 'text');
+          hintTxt.setAttribute('x', p.x);
+          hintTxt.setAttribute('y', p.y - 24);
+          hintTxt.setAttribute('text-anchor', 'middle');
+          hintTxt.setAttribute('font-size', '10');
+          hintTxt.setAttribute('font-weight', '800');
+          hintTxt.setAttribute('fill', '#059669');
+          hintTxt.textContent = "KAPAT";
+          closeHintLayer.appendChild(hintTxt);
+
+          const hit = document.createElementNS(SVG_NS, 'circle');
+          hit.setAttribute('cx', p.x);
+          hit.setAttribute('cy', p.y);
+          hit.setAttribute('r', '36');
+          hit.setAttribute('fill', 'transparent');
+          hit.setAttribute('cursor', 'pointer');
+          hit.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tryClosePolygon();
+          });
+          closeHintLayer.appendChild(hit);
+        }
+
+        const isVertexMode = (activeMode === 'VERTEX' || activeMode === 'ALL');
+        const isSelected = (selectedVertexIndex === idx);
+        const isDiagFirst = (activeMode === 'DIAGONAL' && diagonalFirstIndex === idx);
+
+        if (isDiagFirst) {
+          const selRing = document.createElementNS(SVG_NS, 'circle');
+          selRing.setAttribute('cx', p.x);
+          selRing.setAttribute('cy', p.y);
+          selRing.setAttribute('r', '15');
+          selRing.setAttribute('fill', 'rgba(168, 85, 247, 0.2)');
+          selRing.setAttribute('stroke', '#a855f7');
+          selRing.setAttribute('stroke-width', '2');
+          selRing.setAttribute('class', 'pulse-target');
+          g.appendChild(selRing);
+        }
+
+        const circle = document.createElementNS(SVG_NS, 'circle');
+        circle.setAttribute('cx', p.x);
+        circle.setAttribute('cy', p.y);
+        circle.setAttribute('r', isVertexMode || isDiagFirst ? '8.5' : '7');
+        circle.setAttribute('fill', isDiagFirst ? '#a855f7' : (isSelected ? '#38bdf8' : (isVertexMode ? '#2563eb' : '#4f46e5')));
+        circle.setAttribute('stroke', '#ffffff');
+        circle.setAttribute('stroke-width', '2.5');
+        g.appendChild(circle);
+
+        const text = document.createElementNS(SVG_NS, 'text');
+        text.setAttribute('x', p.x);
+        text.setAttribute('y', p.y - 12);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', '13');
+        text.setAttribute('font-weight', '800');
+        text.setAttribute('fill', isVertexMode ? '#1d4ed8' : '#1e293b');
+        text.setAttribute('class', 'pointer-events-none');
+        text.textContent = p.name;
+        g.appendChild(text);
+
+        g.addEventListener('click', (e) => e.stopPropagation());
+        g.addEventListener('mousedown', (e) => onStartDrag(e, idx));
+        g.addEventListener('touchstart', (e) => onStartDrag(e, idx), { passive: false });
+
+        verticesLayer.appendChild(g);
+      });
+
+      updateInspectorPanel();
+      checkQuests();
+    }
+
+    function updateInspectorPanel() {
+      elementsBadgeList.innerHTML = '';
+      const n = points.length;
+
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-indigo-600', 'ring-blue-500', 'ring-emerald-500', 'ring-purple-500', 'ring-rose-500', 'font-bold');
+      });
+
+      if (n === 0) {
+        detailIcon.textContent = '✨';
+        detailTitle.textContent = "Laboratuvar Hazır";
+        detailDesc.textContent = "Kareli alana dokunarak kendi çokgenini çizebilir veya yukarıdaki hazır şekillerden birini seçebilirsin.";
+        elementsBadgeList.innerHTML = '<span class="text-[11px] text-slate-400 italic">Çalışma alanı boş</span>';
+        return;
+      }
+
+      if (activeMode === 'VERTEX') {
+        const vBtn = document.getElementById('btnModeVertex');
+        if (vBtn) vBtn.classList.add('ring-2', 'ring-blue-500');
+        detailIcon.textContent = '🔵';
+        detailTitle.textContent = `Köşeler (${n} Adet)`;
+        detailDesc.textContent = "Kenarların uç uca birleştiği noktalardır. Geometride daima BÜYÜK HARFLERLE (A, B, C...) isimlendirilir.";
+
+        points.forEach((p, i) => {
+          const btn = document.createElement('button');
+          btn.className = `px-2 py-1 rounded-md text-xs font-bold transition ${selectedVertexIndex === i ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`;
+          btn.textContent = `Köşe ${p.name}`;
+          btn.onclick = () => { selectedVertexIndex = i; renderGeometry(); };
+          elementsBadgeList.appendChild(btn);
+        });
+
+      } else if (activeMode === 'EDGE') {
+        const eBtn = document.getElementById('btnModeEdge');
+        if (eBtn) eBtn.classList.add('ring-2', 'ring-emerald-500');
+        const eCount = isClosed ? n : Math.max(0, n - 1);
+        detailIcon.textContent = '🟢';
+        detailTitle.textContent = `Kenarlar (${eCount} Doğru Parçası)`;
+        detailDesc.textContent = "Ardışık iki köşeyi birleştiren doğru parçalarıdır. 5. Sınıf MEB ders kitabındaki gibi [AB], [BC] köşeli parantez sembolüyle gösterilir.";
+
+        for (let i = 0; i < (isClosed ? n : n - 1); i++) {
+          const span = document.createElement('span');
+          span.className = "px-2 py-1 rounded-md bg-emerald-100 text-emerald-900 text-xs font-bold font-mono-num";
+          span.textContent = `[${points[i].name}${points[(i + 1) % n].name}]`;
+          elementsBadgeList.appendChild(span);
+        }
+
+      } else if (activeMode === 'DIAGONAL') {
+        const dBtn = document.getElementById('btnModeDiagonal');
+        if (dBtn) dBtn.classList.add('ring-2', 'ring-purple-500');
+        detailIcon.textContent = '🟣';
+        detailTitle.textContent = `Köşegen (${userDiagonals.length} Çizili)`;
+        
+        if (!isClosed) {
+          detailDesc.innerHTML = `Çokgeni tamamlamadan köşegen çizilemez. Lütfen önce şekli kapatın.`;
+          elementsBadgeList.innerHTML = '<span class="text-[11px] text-purple-600 italic">Önce çokgeni kapatmalısın.</span>';
+        } else if (n === 3) {
+          detailDesc.innerHTML = `<span class="font-bold text-purple-900">⚠️ Üçgenin KÖŞEGENİ YOKTUR!</span><br>Çünkü üçgende tüm köşeler birbirine komşudur (ardışıktır). Ardışık olmayan köşe bulunmaz.`;
+          elementsBadgeList.innerHTML = '<span class="px-2.5 py-1 rounded-md bg-purple-100 text-purple-900 text-xs font-bold">Üçgen Köşegen Sayısı = 0</span>';
+        } else {
+          const totalPossible = (n * (n - 3)) / 2;
+          detailDesc.innerHTML = `
+            <div class="space-y-1.5 text-xs text-slate-700">
+              <p class="font-bold text-purple-950 bg-purple-100/70 p-1.5 rounded-lg border border-purple-200">
+                “Ardışık olmayan (komşu olmayan) iki köşeyi birleştiren doğru parçasına KÖŞEGEN denir.”
+              </p>
+              <div class="bg-slate-100/90 rounded-lg p-2 space-y-1 text-[11px] font-medium border border-slate-200">
+                <div class="text-emerald-700 flex items-center space-x-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                  <span><strong>A noktasından B'ye</strong> çizilirse ➔ <strong>Kenar</strong> olur!</span>
+                </div>
+                <div class="text-purple-700 flex items-center space-x-1.5">
+                  <span class="w-2 h-2 rounded-full bg-purple-500 inline-block"></span>
+                  <span><strong>A noktasından C'ye</strong> çizilirse ➔ <strong>KÖŞEGEN</strong> olur!</span>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500">
+                💡 <strong>Serbest Çizim:</strong> Bir köşeden diğerine çekip bırakabilir veya iki köşeye sırayla dokunabilirsin.
+              </p>
+            </div>
+          `;
+
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'w-full flex flex-col gap-2 mb-2';
+          actionsDiv.innerHTML = `
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg">
+              <button id="btnDiagDrawMode" class="flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition ${diagonalToolMode === 'DRAW' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-white'}">✏️ Serbest Çiz</button>
+              <button id="btnDiagMoveMode" class="flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition ${diagonalToolMode === 'MOVE' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-white'}">✋ Köşeleri Taşı</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="drawAllDiagonals()" class="flex-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition">✨ Tümünü Çiz (${totalPossible})</button>
+              <button onclick="clearDiagonals()" class="px-2.5 py-1.5 bg-white border border-purple-200 text-purple-800 hover:bg-purple-50 rounded-lg text-xs font-bold transition">↺ Temizle</button>
+            </div>
+          `;
+          elementsBadgeList.appendChild(actionsDiv);
+
+          const btnDraw = document.getElementById('btnDiagDrawMode');
+          const btnMove = document.getElementById('btnDiagMoveMode');
+          if (btnDraw) btnDraw.onclick = () => { diagonalToolMode = 'DRAW'; updateInspectorPanel(); };
+          if (btnMove) btnMove.onclick = () => { diagonalToolMode = 'MOVE'; updateInspectorPanel(); };
+
+          if (userDiagonals.length === 0) {
+            const hint = document.createElement('span');
+            hint.className = 'text-[11px] text-purple-600 italic';
+            hint.textContent = diagonalFirstIndex !== null ? `${points[diagonalFirstIndex].name} seçildi. Şimdi komşu olmayan bir köşe seç veya üzerine sürükle!` : 'Henüz köşegen çizilmedi. İki köşeyi serbestçe birleştir.';
+            elementsBadgeList.appendChild(hint);
+          } else {
+            userDiagonals.forEach(d => {
+              const span = document.createElement('span');
+              span.className = "px-2 py-1 rounded-md bg-purple-100 text-purple-900 text-xs font-bold font-mono-num border border-purple-200";
+              span.textContent = `[${points[d.i].name}${points[d.j].name}]`;
+              elementsBadgeList.appendChild(span);
+            });
+          }
+        }
+
+      } else if (activeMode === 'INTERIOR') {
+        const iBtn = document.getElementById('btnModeInterior');
+        if (iBtn) iBtn.classList.add('ring-2', 'ring-blue-500');
+        detailIcon.textContent = '🔵';
+        detailTitle.textContent = `İç Açılar - Mavi (${isClosed ? n : 0} Adet)`;
+        detailDesc.textContent = "Komşu iki kenarın çokgenin İÇ BÖLGESİNDE oluşturduğu açıdır. Mavi yay ile gösterilir. 5. Sınıf sembolü: s(B̂) veya s(ABĈ).";
+
+        if (isClosed && n >= 3) {
+          const anglesData = computeAllInteriorAngles(points);
+          let sum = 0;
+          anglesData.forEach((data, i) => {
+            sum += data.interiorDeg;
+            const btn = document.createElement('button');
+            btn.className = `px-2 py-1 rounded-md text-xs font-bold transition ${selectedVertexIndex === i ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-900 font-mono-num border border-blue-200'}`;
+            btn.textContent = `s(${data.curr.name}\u0302) = ${data.interiorDeg}°`;
+            btn.title = `s(${data.prev.name}${data.curr.name}\u0302${data.next.name}) = ${data.interiorDeg}°`;
+            btn.onclick = () => { selectedVertexIndex = i; renderGeometry(); };
+            elementsBadgeList.appendChild(btn);
+          });
+          const sumTag = document.createElement('div');
+          sumTag.className = 'w-full mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-blue-900 flex justify-between';
+          sumTag.innerHTML = `<span>İç Açılar Toplamı:</span><span>${sum}° (Formül: (${n}-2)×180°)</span>`;
+          elementsBadgeList.appendChild(sumTag);
+        } else {
+          elementsBadgeList.innerHTML = '<span class="text-[11px] text-blue-600 italic">İç açıları görmek için önce çokgeni kapatmalısın.</span>';
+        }
+
+      } else if (activeMode === 'EXTERIOR') {
+        const extBtn = document.getElementById('btnModeExterior');
+        if (extBtn) extBtn.classList.add('ring-2', 'ring-rose-500');
+        detailIcon.textContent = '🔴';
+        detailTitle.textContent = `Dış Açılar - Kırmızı (${isClosed ? n : 0} Adet)`;
+        detailDesc.textContent = "Bir kenarın uzantısı ile komşu kenarın oluşturduğu açıdır. Her köşede İç Açı (Mavi) ile Dış Açı (Kırmızı) birbirini 180°'ye (Doğru Açı) tamamlar.";
+
+        if (isClosed && n >= 3) {
+          const anglesData = computeAllInteriorAngles(points);
+          let extSum = 0;
+          anglesData.forEach((data) => {
+            const extDeg = 180 - data.interiorDeg;
+            extSum += extDeg;
+            const tag = document.createElement('div');
+            tag.className = 'px-2 py-1 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold font-mono-num flex items-center justify-between gap-2';
+            tag.innerHTML = `<span>${data.curr.name} Köşesi:</span> <span>Dış: ${extDeg}° <span class="text-[10px] text-slate-500 font-normal">(${data.interiorDeg}° Mavi + ${extDeg}° Kırmızı = 180°)</span></span>`;
+            elementsBadgeList.appendChild(tag);
+          });
+          const ruleBox = document.createElement('div');
+          ruleBox.className = 'w-full mt-2 pt-2 border-t border-slate-200 text-xs font-bold text-rose-900 flex justify-between';
+          ruleBox.innerHTML = `<span>İç Açı (Mavi) + Dış Açı (Kırmızı) = 180°</span><span class="text-[11px] text-rose-700">Dış Açılar Toplamı: ${extSum}°</span>`;
+          elementsBadgeList.appendChild(ruleBox);
+        } else {
+          elementsBadgeList.innerHTML = '<span class="text-[11px] text-rose-600 italic">Dış açıları görmek için önce çokgeni kapatmalısın.</span>';
+        }
+
+      } else if (activeMode === 'ALL') {
+        const aBtn = document.getElementById('btnModeAll');
+        if (aBtn) aBtn.classList.add('ring-2', 'ring-indigo-600');
+        detailIcon.textContent = '🌟';
+        detailTitle.textContent = `Tüm Elemanlar (${n}gen)`;
+        detailDesc.textContent = `Köşeler (${n}), kenarlar (${n}), köşegenler (${userDiagonals.length}), iç açılar (mavi - ${n}) ve dış açılar (kırmızı - ${n}) gösterilmektedir.`;
+        elementsBadgeList.innerHTML = `<span class="px-2.5 py-1 rounded-md bg-indigo-100 text-indigo-900 text-xs font-bold">Mavi (İç) + Kırmızı (Dış) = 180° | Mor Kesikli = Köşegen</span>`;
+
+      } else {
+        detailIcon.textContent = '📌';
+        detailTitle.textContent = "Eleman Seç";
+        detailDesc.textContent = "Yukarıdaki butonlardan birine dokunarak köşe, kenar, köşegen, iç açı veya dış açıyı inceleyebilirsin.";
+        elementsBadgeList.innerHTML = '<span class="text-[11px] text-slate-400 italic">Bir eleman butonu seç</span>';
+      }
+    }
+
+    document.getElementById('btnModeVertex').onclick = () => {
+      activeMode = (activeMode === 'VERTEX') ? 'NONE' : 'VERTEX';
+      selectedVertexIndex = null;
+      diagonalFirstIndex = null;
+      playSound('click');
+      renderGeometry();
+    };
+
+    document.getElementById('btnModeEdge').onclick = () => {
+      activeMode = (activeMode === 'EDGE') ? 'NONE' : 'EDGE';
+      selectedVertexIndex = null;
+      diagonalFirstIndex = null;
+      playSound('click');
+      renderGeometry();
+    };
+
+    const btnDiag = document.getElementById('btnModeDiagonal');
+    if (btnDiag) {
+      btnDiag.onclick = () => {
+        activeMode = (activeMode === 'DIAGONAL') ? 'NONE' : 'DIAGONAL';
+        selectedVertexIndex = null;
+        diagonalFirstIndex = null;
+        playSound('click');
+        if (activeMode === 'DIAGONAL' && isClosed && points.length >= 4 && userDiagonals.length === 0) {
+          showToast("Köşegen çizmek için komşu olmayan iki köşeye sırayla dokun.", "🟣");
+        }
+        renderGeometry();
+      };
+    }
+
+    document.getElementById('btnModeInterior').onclick = () => {
+      activeMode = (activeMode === 'INTERIOR') ? 'NONE' : 'INTERIOR';
+      selectedVertexIndex = null;
+      diagonalFirstIndex = null;
+      playSound('click');
+      renderGeometry();
+    };
+
+    const btnExterior = document.getElementById('btnModeExterior');
+    if (btnExterior) {
+      btnExterior.onclick = () => {
+        activeMode = (activeMode === 'EXTERIOR') ? 'NONE' : 'EXTERIOR';
+        selectedVertexIndex = null;
+        diagonalFirstIndex = null;
+        playSound('click');
+        renderGeometry();
+      };
+    }
+
+    document.getElementById('btnModeAll').onclick = () => {
+      activeMode = (activeMode === 'ALL') ? 'NONE' : 'ALL';
+      selectedVertexIndex = null;
+      diagonalFirstIndex = null;
+      playSound('click');
+      renderGeometry();
+    };
+
+    geomSvg.addEventListener('click', (e) => {
+      if (isDragging) return;
+
+      const coords = getSvgCoordinates(e);
+      const x = Math.round(coords.x / 25) * 25;
+      const y = Math.round(coords.y / 25) * 25;
+
+      if (x < 30 || x > 770 || y < 30 || y > 470) return;
+
+      if (isClosed) {
+        showToast("Çokgen tamamlandı. Değiştirmek için köşeleri sürükleyebilir veya 'Temizle'ye basabilirsin.", "ℹ️");
+        return;
+      }
+
+      if (points.length >= MIN_VERTICES) {
+        const first = points[0];
+        if (Math.hypot(first.x - x, first.y - y) <= 35) {
+          tryClosePolygon();
+          return;
+        }
+      }
+
+      if (points.length >= MAX_VERTICES) {
+        playSound('warn');
+        showToast("En fazla 10 köşe oluşturabilirsin.", "⚠️");
+        return;
+      }
+
+      for (const p of points) {
+        if (Math.hypot(p.x - x, p.y - y) < 28) {
+          playSound('warn');
+          showToast("Noktalar birbirine bu kadar yakın olamaz.", "⚠️");
+          return;
+        }
+      }
+
+      const n = points.length;
+      if (n >= 2) {
+        const pNew = { x, y };
+        const pLast = points[n - 1];
+
+        for (let i = 0; i < n - 2; i++) {
+          if (segmentsIntersect(pLast, pNew, points[i], points[i + 1])) {
+            playSound('warn');
+            showToast("⚠️ Bu bağlantı çokgenin kenarlarıyla kesişiyor! Başka bir nokta seç.", "⚠️");
+            return;
+          }
+        }
+      }
+
+      const name = VERTEX_NAMES[points.length] || `P${points.length + 1}`;
+      points.push({ x, y, name });
+      playSound('click');
+
+      if (points.length === 1) {
+        showToast("İlk köşe (A) eklendi. İkinci köşeyi seç.", "🔵");
+      } else if (points.length === 2) {
+        showToast("İkinci köşe (B) eklendi. Çokgen için en az 3 köşe gerekir.", "🟢");
+      } else if (points.length >= 3) {
+        showToast("Şimdi 'Çokgeni Kapat' butonuna veya A noktasına dokunarak kapatabilirsin.", "💡");
+      }
+
+      renderGeometry();
+    });
+
+    function onStartDrag(e, idx) {
+      e.stopPropagation();
+      if (e.type === 'touchstart') e.preventDefault();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      startScreenX = clientX;
+      startScreenY = clientY;
+
+      if (activeMode === 'DIAGONAL' && isClosed && diagonalToolMode === 'DRAW') {
+        isDrawingDiagonal = true;
+        diagonalStartIdx = idx;
+        const pStart = points[idx];
+        if (diagonalDraftLine) {
+          diagonalDraftLine.setAttribute('x1', pStart.x);
+          diagonalDraftLine.setAttribute('y1', pStart.y);
+          diagonalDraftLine.setAttribute('x2', pStart.x);
+          diagonalDraftLine.setAttribute('y2', pStart.y);
+          diagonalDraftLine.classList.remove('hidden');
+        }
+      } else {
+        isDragging = true;
+        draggedIndex = idx;
+        dragStartPos = { ...points[idx] };
+      }
+
+      dragMoved = false;
+
+      window.addEventListener('mousemove', onDragMove);
+      window.addEventListener('mouseup', onDragEnd);
+      window.addEventListener('touchmove', onDragMove, { passive: false });
+      window.addEventListener('touchend', onDragEnd);
+    }
+
+    function onDragMove(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (!dragMoved) {
+        if (Math.hypot(clientX - startScreenX, clientY - startScreenY) < 6) {
+          return;
+        }
+        dragMoved = true;
+      }
+
+      if (e.type === 'touchmove') e.preventDefault();
+
+      const coords = getSvgCoordinates(e);
+
+      if (isDrawingDiagonal && diagonalDraftLine && diagonalStartIdx !== null) {
+        diagonalDraftLine.setAttribute('x2', coords.x);
+        diagonalDraftLine.setAttribute('y2', coords.y);
+        return;
+      }
+
+      if (!isDragging || draggedIndex === null) return;
+
+      const x = Math.min(760, Math.max(40, Math.round(coords.x / 25) * 25));
+      const y = Math.min(460, Math.max(40, Math.round(coords.y / 25) * 25));
+
+      points[draggedIndex].x = x;
+      points[draggedIndex].y = y;
+      hasDragged = true;
+      renderGeometry();
+    }
+
+    function onDragEnd(e) {
+      if (isDrawingDiagonal) {
+        if (diagonalDraftLine) diagonalDraftLine.classList.add('hidden');
+        const coords = getSvgCoordinates(e);
+        const startIdx = diagonalStartIdx;
+
+        let targetIdx = null;
+        for (let i = 0; i < points.length; i++) {
+          if (Math.hypot(points[i].x - coords.x, points[i].y - coords.y) <= 32) {
+            targetIdx = i;
+            break;
+          }
+        }
+
+        if (dragMoved && targetIdx !== null && targetIdx !== startIdx) {
+          handleDiagonalConnection(startIdx, targetIdx);
+          diagonalFirstIndex = null;
+        } else if (!dragMoved || targetIdx === startIdx) {
+          // Tıklama ile serbest seçim
+          if (diagonalFirstIndex === null) {
+            diagonalFirstIndex = startIdx;
+            playSound('click');
+            showToast(`${points[startIdx].name} köşesi seçildi. Şimdi komşu olmayan ikinci köşeyi seç!`, "🟣");
+          } else if (diagonalFirstIndex === startIdx) {
+            diagonalFirstIndex = null;
+            playSound('click');
+            showToast("Köşe seçimi iptal edildi.", "ℹ️");
+          } else {
+            handleDiagonalConnection(diagonalFirstIndex, startIdx);
+            diagonalFirstIndex = null;
+          }
+        }
+
+        isDrawingDiagonal = false;
+        diagonalStartIdx = null;
+        renderGeometry();
+      } else if (isDragging) {
+        if (!dragMoved && dragStartPos && draggedIndex !== null) {
+          points[draggedIndex].x = dragStartPos.x;
+          points[draggedIndex].y = dragStartPos.y;
+          selectedVertexIndex = draggedIndex;
+          renderGeometry();
+        } else if (isClosed && points.length >= 3) {
+          let hasOverlap = false;
+          const n = points.length;
+
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              if (Math.abs(i - j) <= 1 || (i === 0 && j === n - 1)) continue;
+              if (segmentsIntersect(points[i], points[(i + 1) % n], points[j], points[(j + 1) % n])) {
+                hasOverlap = true;
+                break;
+              }
+            }
+            if (hasOverlap) break;
+          }
+
+          if (hasOverlap && dragStartPos) {
+            points[draggedIndex].x = dragStartPos.x;
+            points[draggedIndex].y = dragStartPos.y;
+            playSound('warn');
+            showToast("Kenarlar kesiştiği için köşe eski yerine alındı. Çokgen kenarları kesişemez!", "⚠️");
+            renderGeometry();
+          }
+        }
+
+        isDragging = false;
+        draggedIndex = null;
+        dragStartPos = null;
+        dragMoved = false;
+      }
+
+      window.removeEventListener('mousemove', onDragMove);
+      window.removeEventListener('mouseup', onDragEnd);
+      window.removeEventListener('touchmove', onDragMove);
+      window.removeEventListener('touchend', onDragEnd);
+    }
+
+    undoBtn.addEventListener('click', () => {
+      if (points.length === 0) return;
+      if (isClosed) {
+        isClosed = false;
+        showToast("Çokgen açıldı. Noktaları düzenleyebilirsin.", "↩");
+      } else {
+        points.pop();
+        showToast("Son köşe geri alındı.", "↩");
+      }
+      playSound('click');
+      renderGeometry();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      points = [];
+      userDiagonals = [];
+      diagonalFirstIndex = null;
+      isClosed = false;
+      selectedVertexIndex = null;
+      activeMode = 'NONE';
+      playSound('click');
+      showToast("Çalışma alanı temizlendi.", "🗑️");
+      renderGeometry();
+    });
+
+    function createRegularPolygonPoints(sides, radius, startAngle = -Math.PI / 2) {
+      const cx = 400;
+      const cy = 250;
+      const pts = [];
+      for (let i = 0; i < sides; i++) {
+        const angle = startAngle + (i * 2 * Math.PI / sides);
+        pts.push({
+          x: Math.round((cx + radius * Math.cos(angle)) * 10) / 10,
+          y: Math.round((cy + radius * Math.sin(angle)) * 10) / 10,
+          name: VERTEX_NAMES[i]
+        });
+      }
+      return pts;
+    }
+
+    function loadPreset(type) {
+      playSound('click');
+      isClosed = true;
+      activeMode = 'ALL';
+      selectedVertexIndex = null;
+      diagonalFirstIndex = null;
+      userDiagonals = [];
+
+      if (type === 'triangle') {
+        points = createRegularPolygonPoints(3, 165, -Math.PI / 2);
+      } else if (type === 'quad') {
+        points = createRegularPolygonPoints(4, 155, -Math.PI / 4);
+      } else if (type === 'pentagon') {
+        points = createRegularPolygonPoints(5, 165, -Math.PI / 2);
+      } else if (type === 'hexagon') {
+        points = createRegularPolygonPoints(6, 160, -Math.PI / 3);
+      } else if (type === 'octagon') {
+        points = createRegularPolygonPoints(8, 160, -Math.PI / 2 + Math.PI / 8);
+      } else if (type === 'decagon') {
+        points = createRegularPolygonPoints(10, 165, -Math.PI / 2);
+      }
+
+      if (points.length >= 4) {
+        userDiagonals = [];
+        const n = points.length;
+        for (let i = 0; i < n; i++) {
+          for (let j = i + 1; j < n; j++) {
+            if (!areAdjacent(i, j, n)) {
+              userDiagonals.push({ i, j });
+            }
+          }
+        }
+      }
+
+      const presetTurkishNames = {
+        triangle: 'Eşkenar Üçgen (60°)',
+        quad: 'Kare (90°)',
+        pentagon: 'Düzgün Beşgen (108°)',
+        hexagon: 'Düzgün Altıgen (120°)',
+        octagon: 'Düzgün Sekizgen (135°)',
+        decagon: 'Düzgün Ongen (144°)'
+      };
+
+      showToast(`Düzgün Çokgen yüklendi: ${presetTurkishNames[type] || type.toUpperCase()}.`, "✨");
+      renderGeometry();
+    }
+
+    function checkQuests() {
+      let completedCount = 0;
+      quests.forEach(q => {
+        if (!q.done && q.check(points, isClosed)) {
+          q.done = true;
+          playSound('close');
+          showToast(`🎯 Görev Tamamlandı: ${q.title}!`, "🏆");
+          if (typeof confetti === 'function') confetti({ particleCount: 25, spread: 50 });
+        }
+        if (q.done) completedCount++;
+      });
+
+      questBadge.textContent = `${completedCount}/${quests.length}`;
+      const modalCounter = document.getElementById('questModalCounter');
+      if (modalCounter) modalCounter.textContent = `${completedCount} / ${quests.length}`;
+    }
+
+    function openQuestModal() {
+      const list = document.getElementById('questListContainer');
+      list.innerHTML = '';
+      quests.forEach(q => {
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-xl border flex items-center justify-between ${q.done ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`;
+        item.innerHTML = `
+          <div>
+            <h4 class="text-xs font-bold ${q.done ? 'text-emerald-900' : 'text-slate-800'}">${q.title}</h4>
+            <p class="text-[11px] text-slate-500">${q.desc}</p>
+          </div>
+          <span class="text-base">${q.done ? '✅' : '⏳'}</span>
+        `;
+        list.appendChild(item);
+      });
+      document.getElementById('questModal').classList.remove('hidden');
+    }
+
+    function closeQuestModal() {
+      document.getElementById('questModal').classList.add('hidden');
+    }
+
+    window.addEventListener('load', () => {
+      points = [];
+      isClosed = false;
+      selectedVertexIndex = null;
+      activeMode = 'NONE';
+      renderGeometry();
+      showToast("Hoş geldin! Çokgen çizmek için ızgaraya tıkla veya yukarıdan hazır bir şekil seç.", "👋");
+    });
+  </script>
+</body>
+</html>
