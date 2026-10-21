@@ -34,6 +34,29 @@
       transform-origin: center;
       transform-box: fill-box;
     }
+    @keyframes float-down {
+      0% {
+        transform: translateY(-120px) rotate(0deg);
+        opacity: 0;
+      }
+      15% {
+        opacity: 0.45;
+      }
+      85% {
+        opacity: 0.45;
+      }
+      100% {
+        transform: translateY(105vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    .floating-shape {
+      position: fixed;
+      top: -100px;
+      pointer-events: none;
+      z-index: 0;
+      animation: float-down linear infinite;
+    }
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -47,9 +70,37 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col select-none overflow-x-hidden">
+<body class="bg-slate-100/90 text-slate-800 min-h-screen flex flex-col select-none overflow-x-hidden relative">
 
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+  <!-- Arka Planda Yukarıdan Aşağı Süzülen Tatlı Geometrik Şekiller -->
+  <div id="bgFloatingShapes" class="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+    <svg class="floating-shape" style="left: 3%; width: 44px; height: 44px; animation-duration: 24s; animation-delay: 0s;" viewBox="0 0 100 100">
+      <polygon points="50,10 90,85 10,85" fill="rgba(99, 102, 241, 0.14)" stroke="rgba(99, 102, 241, 0.4)" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="floating-shape" style="left: 11%; width: 34px; height: 34px; animation-duration: 31s; animation-delay: -8s;" viewBox="0 0 100 100">
+      <rect x="15" y="15" width="70" height="70" rx="10" fill="rgba(16, 185, 129, 0.14)" stroke="rgba(16, 185, 129, 0.4)" stroke-width="5"/>
+    </svg>
+    <svg class="floating-shape" style="left: 22%; width: 48px; height: 48px; animation-duration: 28s; animation-delay: -15s;" viewBox="0 0 100 100">
+      <polygon points="50,8 92,38 76,88 24,88 8,38" fill="rgba(168, 85, 247, 0.13)" stroke="rgba(168, 85, 247, 0.38)" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="floating-shape" style="left: 38%; width: 32px; height: 32px; animation-duration: 34s; animation-delay: -5s;" viewBox="0 0 100 100">
+      <polygon points="50,8 88,28 88,72 50,92 12,72 12,28" fill="rgba(244, 63, 94, 0.12)" stroke="rgba(244, 63, 94, 0.35)" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="floating-shape" style="left: 58%; width: 40px; height: 40px; animation-duration: 26s; animation-delay: -19s;" viewBox="0 0 100 100">
+      <polygon points="50,12 88,82 12,82" fill="rgba(245, 158, 11, 0.14)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="floating-shape" style="left: 74%; width: 46px; height: 46px; animation-duration: 29s; animation-delay: -11s;" viewBox="0 0 100 100">
+      <polygon points="50,8 88,28 88,72 50,92 12,72 12,28" fill="rgba(59, 130, 246, 0.13)" stroke="rgba(59, 130, 246, 0.38)" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="floating-shape" style="left: 88%; width: 38px; height: 38px; animation-duration: 25s; animation-delay: -3s;" viewBox="0 0 100 100">
+      <polygon points="50,8 92,38 76,88 24,88 8,38" fill="rgba(16, 185, 129, 0.14)" stroke="rgba(16, 185, 129, 0.38)" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="floating-shape" style="left: 95%; width: 36px; height: 36px; animation-duration: 32s; animation-delay: -21s;" viewBox="0 0 100 100">
+      <rect x="18" y="18" width="64" height="64" rx="12" fill="rgba(168, 85, 247, 0.13)" stroke="rgba(168, 85, 247, 0.38)" stroke-width="5"/>
+    </svg>
+  </div>
+
+  <header class="bg-white/95 backdrop-blur-xs border-b border-slate-200 sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-indigo-200">
@@ -72,7 +123,7 @@
         <button onclick="loadPreset('decagon')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition">Ongen</button>
       </div>
 
-      <!-- Sağ Kontroller: Ses ve Görevler -->
+      <!-- Sağ Kontroller: Ses, Görevler ve Mini Oyun -->
       <div class="flex items-center space-x-2">
         <button id="toggleAudioBtn" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg text-sm border border-slate-200 transition" title="Sesi Aç/Kapat">
           🔊
@@ -82,40 +133,44 @@
           <span>Görevler</span>
           <span id="questBadge" class="ml-1 bg-amber-500 text-white rounded-full px-1.5 py-0.2 text-[10px]">0/7</span>
         </button>
+        <button onclick="openGameModal()" class="flex items-center space-x-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg text-xs font-extrabold shadow-sm shadow-indigo-200 transition active:scale-95">
+          <span>🎮</span>
+          <span>Oyun Oyna</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto w-full flex-1 p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
+  <main class="max-w-7xl mx-auto w-full flex-1 p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start relative z-10">
     
-    <!-- SOL BÖLGE: ÇOKGEN ÇALIŞMA ALANI -->
+    <!-- SOL BÖLGE: ÇOKGEN ÇALIŞMA ALANI (Sabit Yükseklik - Asla Kaymaz/Oynamaz) -->
     <section class="lg:col-span-8 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <!-- Üst Yardımcı Araç Çubuğu -->
-      <div class="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/80">
-        <div class="flex items-center space-x-2">
-          <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-          <span id="shapeSummaryText" class="text-xs sm:text-sm font-bold text-slate-700">Temiz Çalışma Alanı</span>
-          <span id="shapeValidityText" class="text-xs text-slate-500 hidden sm:inline font-medium">(Nokta eklemek için kareli alana dokun)</span>
+      <!-- Üst Yardımcı Araç Çubuğu (Sabit Yükseklik h-12) -->
+      <div class="h-12 px-3 border-b border-slate-100 flex items-center justify-between gap-2 bg-slate-50/80 shrink-0">
+        <div class="flex items-center space-x-2 truncate">
+          <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></span>
+          <span id="shapeSummaryText" class="text-xs sm:text-sm font-bold text-slate-700 truncate">Temiz Çalışma Alanı</span>
+          <span id="shapeValidityText" class="text-xs text-slate-500 hidden sm:inline font-medium truncate">(Nokta eklemek için kareli alana dokun)</span>
         </div>
 
-        <div class="flex items-center space-x-1.5">
+        <div class="flex items-center space-x-1.5 shrink-0">
           <!-- Çokgeni Kapat Butonu -->
-          <button id="closePolyBtn" class="hidden items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+          <button id="closePolyBtn" class="hidden items-center space-x-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
             <span>✅</span>
             <span>Çokgeni Kapat</span>
           </button>
           
-          <button id="undoBtn" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 disabled:opacity-40 transition" title="Son köşeyi geri al">
+          <button id="undoBtn" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 disabled:opacity-40 transition" title="Son köşeyi geri al">
             ↩ Geri Al
           </button>
-          <button id="clearBtn" class="px-2.5 py-1.5 bg-white hover:bg-rose-50 hover:text-rose-600 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition" title="Tümünü temizle">
+          <button id="clearBtn" class="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-600 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition" title="Tümünü temizle">
             🗑️ Temizle
           </button>
         </div>
       </div>
 
-      <!-- İnteraktif SVG Tuval -->
-      <div class="relative flex-1 min-h-[380px] sm:min-h-[460px] bg-slate-50 overflow-hidden flex items-center justify-center" id="canvasContainer">
+      <!-- İnteraktif SVG Tuval (Sabit Yükseklik: Sağ panel uzasa da asla oynamaz) -->
+      <div class="relative w-full h-[380px] sm:h-[480px] bg-slate-50 overflow-hidden flex items-center justify-center shrink-0" id="canvasContainer">
         <svg id="geomSvg" class="w-full h-full cursor-crosshair block" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet">
           <defs>
             <pattern id="smallGrid" width="25" height="25" patternUnits="userSpaceOnUse">
@@ -284,6 +339,73 @@
       <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
         <span class="text-xs text-slate-500">Tamamlanan: <strong id="questModalCounter" class="text-slate-800 font-bold">0 / 7</strong></span>
         <button onclick="closeQuestModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-sm transition">Devam Et</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      <!-- Oyun Üst Başlık -->
+      <div class="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-2xl">🎮</span>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold leading-tight">Çokgen Avcısı Mini Oyun</h3>
+            <p class="text-[11px] text-indigo-100">5 soruda çokgen elemanlarını ne kadar iyi tanıdığını göster!</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span id="gameScoreBadge" class="px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-bold font-mono-num">Puan: 0 / 5</span>
+          <button onclick="closeGameModal()" class="w-8 h-8 rounded-lg bg-white/15 hover:bg-white/25 text-white flex items-center justify-center font-bold text-sm transition">✕</button>
+        </div>
+      </div>
+
+      <!-- İlerleme Çubuğu -->
+      <div class="bg-slate-100 h-2 w-full">
+        <div id="gameProgressBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 20%;"></div>
+      </div>
+
+      <!-- Oyun Gövdesi -->
+      <div id="gamePlayArea" class="p-4 sm:p-5 overflow-y-auto flex-1 flex flex-col space-y-4">
+        <div class="flex items-center justify-between">
+          <span id="gameStepBadge" class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">Soru 1 / 5</span>
+          <span id="gameTopicBadge" class="text-xs font-bold text-slate-500">🔵 Köşe Bulma</span>
+        </div>
+
+        <h4 id="gameQuestionTitle" class="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+          Soru yükleniyor...
+        </h4>
+
+        <!-- Oyun İnteraktif SVG Görseli -->
+        <div class="w-full h-56 sm:h-64 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
+          <svg id="gameSvg" class="w-full h-full block" viewBox="0 0 500 260" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <!-- Şıklı Sorular İçin Seçenekler Alanı -->
+        <div id="gameOptionsContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+
+        <!-- Geri Bildirim Kutusu -->
+        <div id="gameFeedbackBox" class="hidden p-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2">
+          <span id="gameFeedbackText"></span>
+          <button id="gameNextBtn" onclick="nextGameQuestion()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shrink-0 shadow-xs transition">
+            Sonraki Soru ➔
+          </button>
+        </div>
+      </div>
+
+      <!-- Oyun Bitiş Ekranı -->
+      <div id="gameResultArea" class="p-6 text-center space-y-4 hidden">
+        <div class="text-5xl">🏆</div>
+        <h3 class="text-xl font-extrabold text-slate-900">Tebrikler, Geometri Kaşifi!</h3>
+        <p id="gameFinalSummary" class="text-sm text-slate-600 max-w-md mx-auto"></p>
+        <div class="flex items-center justify-center gap-3 pt-2">
+          <button onclick="startMiniGame()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition">
+            🔄 Tekrar Oyna
+          </button>
+          <button onclick="closeGameModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+            Laboratuvara Dön
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1597,6 +1719,343 @@
 
     function closeQuestModal() {
       document.getElementById('questModal').classList.add('hidden');
+    }
+
+    let currentGameQ = 0;
+    let gameScore = 0;
+    let gameAnswered = false;
+
+    const gameQuestions = [
+      {
+        topic: "🔵 1. Soru: Köşeyi Bul",
+        question: "Aşağıdaki ABCDE beşgeninde 'D KÖŞESİ' hangisidir? Doğrudan şekil üzerindeki D köşesine tıkla!",
+        type: "click-vertex",
+        targetIndex: 3,
+        pts: [
+          { x: 250, y: 35, name: 'A' },
+          { x: 380, y: 105, name: 'B' },
+          { x: 335, y: 220, name: 'C' },
+          { x: 165, y: 220, name: 'D' },
+          { x: 120, y: 105, name: 'E' }
+        ]
+      },
+      {
+        topic: "🟢 2. Soru: Kenarı Tıkla",
+        question: "ABCD dörtgeninde '[BC] KENARI' (doğru parçası) hangisidir? Şekil üzerinde [BC] kenarına dokun!",
+        type: "click-edge",
+        targetEdge: 1, // B -> C
+        pts: [
+          { x: 150, y: 55, name: 'A' },
+          { x: 350, y: 55, name: 'B' },
+          { x: 380, y: 210, name: 'C' },
+          { x: 120, y: 210, name: 'D' }
+        ]
+      },
+      {
+        topic: "🟣 3. Soru: Köşegen Hangisi?",
+        question: "Komşu olmayan iki köşeyi birleştiren doğru parçasına KÖŞEGEN denir. Şekildeki mor kesikli çizgi hangi köşegendir?",
+        type: "multiple-choice",
+        options: ["[AB] Kenarı", "[AC] Köşegeni", "[BC] Kenarı", "[AD] Kenarı"],
+        correctOption: 1,
+        pts: [
+          { x: 150, y: 50, name: 'A' },
+          { x: 355, y: 60, name: 'B' },
+          { x: 340, y: 210, name: 'C' },
+          { x: 135, y: 200, name: 'D' }
+        ],
+        highlightDiagonal: [0, 2] // A - C
+      },
+      {
+        topic: "🔵 4. Soru: İç Açı Bulma",
+        question: "Dörtgenin iç açıları toplamı 360°'dir. Şekildeki ABCD dörtgeninde verilmeyen s(Ĉ) iç açısı kaç derecedir?",
+        type: "multiple-choice",
+        options: ["70°", "80°", "90°", "100°"],
+        correctOption: 1, // 100 + 85 + 95 = 280 -> 360 - 280 = 80°
+        pts: [
+          { x: 145, y: 55, name: 'A', angleLabel: '100°' },
+          { x: 355, y: 65, name: 'B', angleLabel: '85°' },
+          { x: 340, y: 210, name: 'C', angleLabel: '?' },
+          { x: 135, y: 205, name: 'D', angleLabel: '95°' }
+        ]
+      },
+      {
+        topic: "🔴 5. Soru: Dış Açı ve Bütünler Kuralı",
+        question: "Her köşede Mavi İç Açı ile Kırmızı Dış Açının toplamı 180°'dir. B köşesindeki iç açı 110° ise kırmızı DIŞ AÇI kaç derecedir?",
+        type: "multiple-choice",
+        options: ["60°", "70°", "80°", "110°"],
+        correctOption: 1, // 180 - 110 = 70°
+        pts: [
+          { x: 130, y: 60, name: 'A' },
+          { x: 310, y: 75, name: 'B' },
+          { x: 345, y: 215, name: 'C' },
+          { x: 140, y: 215, name: 'D' }
+        ],
+        showExteriorAtB: true
+      }
+    ];
+
+    function openGameModal() {
+      playSound('click');
+      document.getElementById('gameModal').classList.remove('hidden');
+      startMiniGame();
+    }
+
+    function closeGameModal() {
+      document.getElementById('gameModal').classList.add('hidden');
+    }
+
+    function startMiniGame() {
+      currentGameQ = 0;
+      gameScore = 0;
+      document.getElementById('gamePlayArea').classList.remove('hidden');
+      document.getElementById('gameResultArea').classList.add('hidden');
+      renderGameQuestion();
+    }
+
+    function renderGameQuestion() {
+      gameAnswered = false;
+      const q = gameQuestions[currentGameQ];
+      document.getElementById('gameStepBadge').textContent = `Soru ${currentGameQ + 1} / ${gameQuestions.length}`;
+      document.getElementById('gameTopicBadge').textContent = q.topic;
+      document.getElementById('gameQuestionTitle').textContent = q.question;
+      document.getElementById('gameScoreBadge').textContent = `Puan: ${gameScore} / ${gameQuestions.length}`;
+      document.getElementById('gameProgressBar').style.width = `${((currentGameQ + 1) / gameQuestions.length) * 100}%`;
+
+      const fbBox = document.getElementById('gameFeedbackBox');
+      fbBox.classList.add('hidden');
+
+      const optContainer = document.getElementById('gameOptionsContainer');
+      optContainer.innerHTML = '';
+
+      const gameSvg = document.getElementById('gameSvg');
+      gameSvg.innerHTML = '';
+
+      // Arka plan ızgara deseni
+      const bgRect = document.createElementNS(SVG_NS, 'rect');
+      bgRect.setAttribute('width', '500');
+      bgRect.setAttribute('height', '260');
+      bgRect.setAttribute('fill', '#f8fafc');
+      gameSvg.appendChild(bgRect);
+
+      // Çokgen dolgusu
+      const poly = document.createElementNS(SVG_NS, 'polygon');
+      poly.setAttribute('points', q.pts.map(p => `${p.x},${p.y}`).join(' '));
+      poly.setAttribute('fill', 'rgba(99, 102, 241, 0.12)');
+      poly.setAttribute('stroke', 'none');
+      gameSvg.appendChild(poly);
+
+      // Eğer Soru 3 ise Köşegen çiz
+      if (q.highlightDiagonal) {
+        const p1 = q.pts[q.highlightDiagonal[0]];
+        const p2 = q.pts[q.highlightDiagonal[1]];
+        const dLine = document.createElementNS(SVG_NS, 'line');
+        dLine.setAttribute('x1', p1.x);
+        dLine.setAttribute('y1', p1.y);
+        dLine.setAttribute('x2', p2.x);
+        dLine.setAttribute('y2', p2.y);
+        dLine.setAttribute('stroke', '#9333ea');
+        dLine.setAttribute('stroke-width', '4');
+        dLine.setAttribute('stroke-dasharray', '7 5');
+        gameSvg.appendChild(dLine);
+
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        const lbl = document.createElementNS(SVG_NS, 'text');
+        lbl.setAttribute('x', midX + 12);
+        lbl.setAttribute('y', midY - 8);
+        lbl.setAttribute('fill', '#7e22ce');
+        lbl.setAttribute('font-size', '13');
+        lbl.setAttribute('font-weight', '800');
+        lbl.textContent = '?';
+        gameSvg.appendChild(lbl);
+      }
+
+      // Eğer Soru 5 ise B köşesinde iç ve dış açı göster
+      if (q.showExteriorAtB) {
+        const pA = q.pts[0];
+        const pB = q.pts[1];
+        const dx = pB.x - pA.x;
+        const dy = pB.y - pA.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const extX = pB.x + (dx / len) * 85;
+        const extY = pB.y + (dy / len) * 85;
+
+        const extLine = document.createElementNS(SVG_NS, 'line');
+        extLine.setAttribute('x1', pB.x);
+        extLine.setAttribute('y1', pB.y);
+        extLine.setAttribute('x2', extX);
+        extLine.setAttribute('y2', extY);
+        extLine.setAttribute('stroke', '#dc2626');
+        extLine.setAttribute('stroke-width', '3');
+        extLine.setAttribute('stroke-dasharray', '5 4');
+        gameSvg.appendChild(extLine);
+
+        // İç açı etiketi (Mavi 110°)
+        const intTxt = document.createElementNS(SVG_NS, 'text');
+        intTxt.setAttribute('x', pB.x - 32);
+        intTxt.setAttribute('y', pB.y + 28);
+        intTxt.setAttribute('fill', '#1d4ed8');
+        intTxt.setAttribute('font-size', '13');
+        intTxt.setAttribute('font-weight', '800');
+        intTxt.textContent = '110°';
+        gameSvg.appendChild(intTxt);
+
+        // Dış açı etiketi (Kırmızı ?°)
+        const extTxt = document.createElementNS(SVG_NS, 'text');
+        extTxt.setAttribute('x', pB.x + 38);
+        extTxt.setAttribute('y', pB.y + 32);
+        extTxt.setAttribute('fill', '#dc2626');
+        extTxt.setAttribute('font-size', '14');
+        extTxt.setAttribute('font-weight', '800');
+        extTxt.textContent = '?°';
+        gameSvg.appendChild(extTxt);
+      }
+
+      // Kenarları Çiz
+      const n = q.pts.length;
+      for (let i = 0; i < n; i++) {
+        const p1 = q.pts[i];
+        const p2 = q.pts[(i + 1) % n];
+
+        const edgeLine = document.createElementNS(SVG_NS, 'line');
+        edgeLine.setAttribute('x1', p1.x);
+        edgeLine.setAttribute('y1', p1.y);
+        edgeLine.setAttribute('x2', p2.x);
+        edgeLine.setAttribute('y2', p2.y);
+        edgeLine.setAttribute('stroke', '#4f46e5');
+        edgeLine.setAttribute('stroke-width', '3.5');
+        edgeLine.setAttribute('stroke-linecap', 'round');
+        gameSvg.appendChild(edgeLine);
+
+        if (q.type === 'click-edge') {
+          const hitEdge = document.createElementNS(SVG_NS, 'line');
+          hitEdge.setAttribute('x1', p1.x);
+          hitEdge.setAttribute('y1', p1.y);
+          hitEdge.setAttribute('x2', p2.x);
+          hitEdge.setAttribute('y2', p2.y);
+          hitEdge.setAttribute('stroke', 'transparent');
+          hitEdge.setAttribute('stroke-width', '22');
+          hitEdge.setAttribute('cursor', 'pointer');
+          hitEdge.onclick = () => {
+            if (gameAnswered) return;
+            const isCorrect = (i === q.targetEdge);
+            edgeLine.setAttribute('stroke', isCorrect ? '#10b981' : '#ef4444');
+            edgeLine.setAttribute('stroke-width', '6');
+            handleGameAnswer(isCorrect, isCorrect ? "Harika! [BC] kenarını doğru buldun." : `Seçtiğin kenar [${p1.name}${p2.name}] kenarıydı. Doğrusu B ile C arasındaki [BC] kenarıdır.`);
+          };
+          gameSvg.appendChild(hitEdge);
+        }
+      }
+
+      // Köşeleri ve Açıları Çiz
+      q.pts.forEach((p, idx) => {
+        const g = document.createElementNS(SVG_NS, 'g');
+
+        if (p.angleLabel) {
+          const cx = 250, cy = 130;
+          const vx = cx - p.x, vy = cy - p.y;
+          const vlen = Math.hypot(vx, vy) || 1;
+          const ax = p.x + (vx / vlen) * 34;
+          const ay = p.y + (vy / vlen) * 34;
+
+          const aTxt = document.createElementNS(SVG_NS, 'text');
+          aTxt.setAttribute('x', ax);
+          aTxt.setAttribute('y', ay + 4);
+          aTxt.setAttribute('text-anchor', 'middle');
+          aTxt.setAttribute('font-size', '12');
+          aTxt.setAttribute('font-weight', '800');
+          aTxt.setAttribute('fill', p.angleLabel === '?' ? '#dc2626' : '#1d4ed8');
+          aTxt.textContent = p.angleLabel;
+          g.appendChild(aTxt);
+        }
+
+        const c = document.createElementNS(SVG_NS, 'circle');
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', p.y);
+        c.setAttribute('r', q.type === 'click-vertex' ? '11' : '7.5');
+        c.setAttribute('fill', '#4f46e5');
+        c.setAttribute('stroke', '#ffffff');
+        c.setAttribute('stroke-width', '2.5');
+        if (q.type === 'click-vertex') {
+          c.setAttribute('cursor', 'pointer');
+          c.onclick = () => {
+            if (gameAnswered) return;
+            const isCorrect = (idx === q.targetIndex);
+            c.setAttribute('fill', isCorrect ? '#10b981' : '#ef4444');
+            c.setAttribute('r', '13');
+            handleGameAnswer(isCorrect, isCorrect ? "Tebrikler! D köşesini doğru işaretledin." : `Tıkladığın nokta ${p.name} köşesiydi.`);
+          };
+        }
+        g.appendChild(c);
+
+        const t = document.createElementNS(SVG_NS, 'text');
+        t.setAttribute('x', p.x);
+        t.setAttribute('y', p.y - 14);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('font-size', '13');
+        t.setAttribute('font-weight', '800');
+        t.setAttribute('fill', '#1e293b');
+        t.textContent = p.name;
+        g.appendChild(t);
+
+        gameSvg.appendChild(g);
+      });
+
+      // Şıklı soruysa butonları oluştur
+      if (q.type === 'multiple-choice') {
+        q.options.forEach((optText, idx) => {
+          const btn = document.createElement('button');
+          btn.className = "py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-xs sm:text-sm font-bold text-slate-800 transition active:scale-95";
+          btn.textContent = optText;
+          btn.onclick = () => {
+            if (gameAnswered) return;
+            const isCorrect = (idx === q.correctOption);
+            btn.className = isCorrect
+              ? "py-2.5 px-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-xs sm:text-sm font-extrabold text-emerald-900"
+              : "py-2.5 px-3 rounded-xl border-2 border-rose-500 bg-rose-50 text-xs sm:text-sm font-extrabold text-rose-900";
+            handleGameAnswer(isCorrect, isCorrect ? `Harika! Doğru cevap: ${optText}` : `Doğru cevap "${q.options[q.correctOption]}" olmalıydı.`);
+          };
+          optContainer.appendChild(btn);
+        });
+      }
+    }
+
+    function handleGameAnswer(isCorrect, message) {
+      gameAnswered = true;
+      if (isCorrect) {
+        gameScore++;
+        playSound('close');
+        if (typeof confetti === 'function') confetti({ particleCount: 25, spread: 50 });
+      } else {
+        playSound('warn');
+      }
+
+      document.getElementById('gameScoreBadge').textContent = `Puan: ${gameScore} / ${gameQuestions.length}`;
+      const fbBox = document.getElementById('gameFeedbackBox');
+      const fbText = document.getElementById('gameFeedbackText');
+      const nextBtn = document.getElementById('gameNextBtn');
+
+      fbBox.className = isCorrect
+        ? "p-3 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between gap-2"
+        : "p-3 rounded-xl border bg-rose-50 border-rose-200 text-rose-900 text-xs font-bold flex items-center justify-between gap-2";
+
+      fbText.textContent = (isCorrect ? "✅ " : "💡 ") + message;
+      nextBtn.textContent = (currentGameQ === gameQuestions.length - 1) ? "Sonucu Gör 🏆" : "Sonraki Soru ➔";
+      fbBox.classList.remove('hidden');
+    }
+
+    function nextGameQuestion() {
+      playSound('click');
+      currentGameQ++;
+      if (currentGameQ < gameQuestions.length) {
+        renderGameQuestion();
+      } else {
+        document.getElementById('gamePlayArea').classList.add('hidden');
+        const resArea = document.getElementById('gameResultArea');
+        resArea.classList.remove('hidden');
+        document.getElementById('gameFinalSummary').textContent = `5 sorudan ${gameScore} tanesini doğru cevapladın! Köşe, kenar, köşegen, iç açı ve dış açı konularında harika bir Geometri Kaşifisin!`;
+        if (typeof confetti === 'function') confetti({ particleCount: 55, spread: 70 });
+      }
     }
 
     window.addEventListener('load', () => {
